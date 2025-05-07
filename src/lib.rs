@@ -1,5 +1,5 @@
 //! A minimal library with for interacting with Solana programs using Anchor IDL files.
-//! 
+//!
 //! The primary innovation of this crate is the ability to parse an individual idl file with a
 //! single macro call.
 #![no_std]
@@ -18,29 +18,31 @@ pub extern crate lhash;
 #[doc(hidden)]
 pub extern crate eager2;
 
-#[cfg(not(feature = "solana-pubkey"))]
-mod solana_pubkey;
 #[cfg(not(feature = "solana-instruction"))]
 mod solana_instruction;
+#[cfg(not(feature = "solana-pubkey"))]
+mod solana_pubkey;
 
-pub use solana_pubkey::{Pubkey, PubkeyError, pubkey};
 pub use solana_instruction::{AccountMeta, Instruction};
+pub use solana_pubkey::{pubkey, Pubkey, PubkeyError};
 
 /// Parses an idl file.
-/// 
+///
 /// The path must be a file path relative to `CARGO_MANIFEST_DIR`.
-/// 
+///
 /// Creates a `mod` with the name from the idl file containing all the `instructions`, `accounts`,
 /// and `types`. Does not currently parse external types in new idl format.
-/// 
+///
 /// This macro does not do a whole lot of error-checking while parsing, so valid IDL files are
 /// expected.
 #[macro_export]
 #[eager_macro]
 macro_rules! parse_idl {
-    ($path:literal) => {$crate::eager2::eager! {
-        $crate::__parse_idl!(include!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path)))
-    }};
+    ($path:literal) => {
+        $crate::eager2::eager! {
+            $crate::__parse_idl!(include!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $path)))
+        }
+    };
 }
 
 #[doc(hidden)]
@@ -279,7 +281,7 @@ macro_rules! __expand_idl_instruction {
 
             impl Type {
                 pub const DISCRIMINATOR_NAME: &str = concat!("global:", ccase!($name, t: "snake"));
-                pub const DISCRIMINATOR: &[u8] = 
+                pub const DISCRIMINATOR: &[u8] =
                     eager_if![token_eq!({$($discriminator)?}, {})]
                         {
                             $crate::lhash::sha256(Self::DISCRIMINATOR_NAME.as_bytes())
@@ -402,7 +404,7 @@ macro_rules! __expand_idl_accounts {
 
             pub use ccase!(unstringify!($struct_name), t:"UpperCamel") as Type;
         }
-        
+
         #[allow(clippy::ptr_arg)]
         pub fn get_accounts(_self: &Type, _account_metas: &mut Vec<$crate::AccountMeta>) {$(
             $field_name::get_accounts(&_self.$field_name, _account_metas);)*
@@ -587,7 +589,7 @@ macro_rules! __expand_idl_error {
     ) => {$crate::eager2::eager!{
         $(#[doc = $msg])?
         pub const ccase!(unstringify!($name), t:"CONSTANT"): u32 = $code;
-        
+
         $(#[doc = $msg])?
         pub struct ccase!(unstringify!($name), t:"UpperCamel");
         impl ccase!(unstringify!($name), t:"UpperCamel") {
@@ -709,7 +711,6 @@ macro_rules! __parse_idl_type_struct {
         compile_error!(concat!("idl struct type failed to parse:\n", stringify!($($content)*)))
     };
 }
-
 
 #[doc(hidden)]
 #[macro_export]
@@ -1045,7 +1046,7 @@ macro_rules! __expand_idl_constant_value_inner {
     ({ "option": $type:tt}; Some($value:tt)) => {
         Some($crate::__expand_idl_constant_value_inner!($type; $value))
     };
-    
+
     ($($content:tt)*) => {
         compile_error!(concat!("idl constant value failed to expand:\n", stringify!($($content)*)))
     };
@@ -1093,11 +1094,14 @@ macro_rules! __trim_path {
     };
 }
 
-
 #[doc(hidden)]
 #[macro_export]
 #[eager_macro]
 macro_rules! __is_ident {
-    ($_:ident) => {true};
-    ($($_:tt)*) => {false};
+    ($_:ident) => {
+        true
+    };
+    ($($_:tt)*) => {
+        false
+    };
 }

@@ -1,4 +1,4 @@
-use micro_solana_client::{pubkey, parse_idl, Pubkey};
+use micro_solana_client::{parse_idl, pubkey, Pubkey};
 
 pub static ID: Pubkey = pubkey!("My11111111111111111111111111111111111111111");
 
@@ -17,7 +17,7 @@ pub mod old {
 
 const _: () = {
     let _ = message_transmitter::errors::PROGRAM_PAUSED;
-    let v=micro_solana_client::eager2::eager!{
+    let v = micro_solana_client::eager2::eager! {
         micro_solana_client::__is_ident!(unstringify!("foo::bar"))
     };
     assert!(!v);

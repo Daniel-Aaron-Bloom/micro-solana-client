@@ -1,6 +1,5 @@
-use core::fmt;
 use borsh::{BorshDeserialize, BorshSerialize};
-
+use core::fmt;
 
 /// Convenience macro to define a static public key.
 ///
@@ -13,7 +12,7 @@ macro_rules! pubkey {
 }
 
 #[doc(hidden)]
-pub mod pubkey{}
+pub mod pubkey {}
 
 /// Maximum string length of a base58 encoded pubkey
 const MAX_BASE58_LEN: usize = 44;
@@ -60,7 +59,9 @@ pub enum PubkeyError {
 /// [ed25519]: https://ed25519.cr.yp.to/
 /// [pdas]: https://solana.com/docs/core/cpi#program-derived-addresses
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, BorshDeserialize, BorshSerialize)]
+#[derive(
+    Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, BorshDeserialize, BorshSerialize,
+)]
 pub struct Pubkey([u8; PUBKEY_BYTES]);
 
 impl fmt::Debug for Pubkey {
@@ -92,7 +93,10 @@ impl Pubkey {
             .expect("Unable to find a viable program address bump seed")
     }
 
-    pub const fn try_find_program_address(seeds: &[&[u8]], program_id: &Pubkey) -> Option<(Pubkey, u8)> {
+    pub const fn try_find_program_address(
+        seeds: &[&[u8]],
+        program_id: &Pubkey,
+    ) -> Option<(Pubkey, u8)> {
         let mut bump_seed = [u8::MAX];
         loop {
             match Self::create_program_address_helper(seeds, &[&bump_seed], program_id) {
@@ -225,24 +229,23 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
         }
         #[rustfmt::skip] // keep alignment of c* calculations
         const fn pow2k(&self, mut k: u32) -> Self {
-    
             debug_assert!( k > 0 );
-    
+
             /// Multiply two 64-bit integers with 128 bits of output.
             #[inline(always)]
             const fn m(x: u64, y: u64) -> u128 {
                 (x as u128) * (y as u128)
             }
-    
+
             let mut a: [u64; 5] = self.0;
-    
+
             loop {
                 // Precondition: assume input limbs a[i] are bounded as
                 //
                 // a[i] < 2^(51 + b)
                 //
                 // where b is a real parameter measuring the "bit excess" of the limbs.
-    
+
                 // Precomputation: 64-bit multiply by 19.
                 //
                 // This fits into a u64 whenever 51 + b + lg(19) < 64.
@@ -252,7 +255,7 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
                 // this fits if b < 8.75.
                 let a3_19 = 19 * a[3];
                 let a4_19 = 19 * a[4];
-    
+
                 // Multiply to get 128-bit coefficients of output.
                 //
                 // The 128-bit multiplications by 2 turn into 1 slr + 1 slrd each,
@@ -263,7 +266,7 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
                 let mut c2: u128 = m(a[1],  a[1]) + 2*( m(a[0],  a[2]) + m(a[4], a3_19) );
                 let mut c3: u128 = m(a[4], a4_19) + 2*( m(a[0],  a[3]) + m(a[1],  a[2]) );
                 let mut c4: u128 = m(a[2],  a[2]) + 2*( m(a[0],  a[4]) + m(a[1],  a[3]) );
-    
+
                 // Same bound as in multiply:
                 //    c[i] < 2^(102 + 2*b) * (1+i + (4-i)*19)
                 //         < 2^(102 + lg(1 + 4*19) + 2*b)
@@ -280,26 +283,26 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
                 debug_assert!(a[2] < (1 << 54));
                 debug_assert!(a[3] < (1 << 54));
                 debug_assert!(a[4] < (1 << 54));
-    
+
                 const LOW_51_BIT_MASK: u64 = (1u64 << 51) - 1;
-    
+
                 // Casting to u64 and back tells the compiler that the carry is bounded by 2^64, so
                 // that the addition is a u128 + u64 rather than u128 + u128.
                 c1 += ((c0 >> 51) as u64) as u128;
                 a[0] = (c0 as u64) & LOW_51_BIT_MASK;
-    
+
                 c2 += ((c1 >> 51) as u64) as u128;
                 a[1] = (c1 as u64) & LOW_51_BIT_MASK;
-    
+
                 c3 += ((c2 >> 51) as u64) as u128;
                 a[2] = (c2 as u64) & LOW_51_BIT_MASK;
-    
+
                 c4 += ((c3 >> 51) as u64) as u128;
                 a[3] = (c3 as u64) & LOW_51_BIT_MASK;
-    
+
                 let carry: u64 = (c4 >> 51) as u64;
                 a[4] = (c4 as u64) & LOW_51_BIT_MASK;
-    
+
                 // To see that this does not overflow, we need a[0] + carry * 19 < 2^64.
                 //
                 // c4 < a2^2 + 2*a0*a4 + 2*a1*a3 + (carry from c3)
@@ -315,19 +318,19 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
                 //
                 // and there is no overflow.
                 a[0] += carry * 19;
-    
+
                 // Now a[1] < 2^51 + 2^(64 -51) = 2^51 + 2^13 < 2^(51 + epsilon).
                 a[1] += a[0] >> 51;
                 a[0] &= LOW_51_BIT_MASK;
-    
+
                 // Now all a[i] < 2^(51 + epsilon) and a = self^(2^k).
-    
+
                 k -= 1;
                 if k == 0 {
                     break;
                 }
             }
-    
+
             Self(a)
         }
         const fn add_assign(&mut self, rhs: &Self) {
@@ -471,10 +474,10 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
         }
 
         const fn eq(&self, other: &Self) -> bool {
-            let mut i = 0; 
+            let mut i = 0;
             while i < self.0.len() {
                 if self.0[i] != other.0[i] {
-                    return false
+                    return false;
                 }
                 i += 1;
             }
@@ -484,7 +487,7 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
         #[inline(always)]
         const fn reduce(mut limbs: [u64; 5]) -> Self {
             const LOW_51_BIT_MASK: u64 = (1u64 << 51) - 1;
-    
+
             // Since the input limbs are bounded by 2^64, the biggest
             // carry-out is bounded by 2^13.
             //
@@ -495,25 +498,25 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
             // Because we don't need to canonicalize, only to reduce the
             // limb sizes, it's OK to do a "weak reduction", where we
             // compute the carry-outs in parallel.
-    
+
             let c0 = limbs[0] >> 51;
             let c1 = limbs[1] >> 51;
             let c2 = limbs[2] >> 51;
             let c3 = limbs[3] >> 51;
             let c4 = limbs[4] >> 51;
-    
+
             limbs[0] &= LOW_51_BIT_MASK;
             limbs[1] &= LOW_51_BIT_MASK;
             limbs[2] &= LOW_51_BIT_MASK;
             limbs[3] &= LOW_51_BIT_MASK;
             limbs[4] &= LOW_51_BIT_MASK;
-    
+
             limbs[0] += c4 * 19;
             limbs[1] += c0;
             limbs[2] += c1;
             limbs[3] += c2;
             limbs[4] += c3;
-    
+
             Self(limbs)
         }
 
@@ -550,10 +553,10 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
             let t17 = t16.mul(&t15);           // 199..0
             let t18 = t17.pow2k(50);           // 249..50
             let t19 = t18.mul(&t13);           // 249..0
-    
+
             (t19, t3)
         }
-            
+
         /// Raise this field element to the power (p-5)/8 = 2^252 -3.
         #[rustfmt::skip] // keep alignment of explanatory comments
         #[allow(clippy::let_and_return)]
@@ -602,12 +605,12 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
             // If vr^2 = -u, then sqrt(u/v) = r*sqrt(-1).
             //
             // If v is zero, r is also zero.
-    
+
             let v3 = v.square().mul(v);
             let v7 = v3.square().mul(v);
             let r = u.mul(&v3).mul(&u.mul(&v7)).pow_p58();
             let check = v.mul(&r.square());
-    
+
             check.eq(&u) || check.eq(&u.neg())
         }
     }
@@ -615,11 +618,10 @@ pub const fn bytes_are_curve_point(bytes: [u8; 32]) -> bool {
     let y = FieldElement::from_bytes(&bytes);
     let z = FieldElement::ONE;
     let yy = y.square();
-    let u = yy.sub(&z);                               // u =  y²-1
+    let u = yy.sub(&z); // u =  y²-1
     let v = yy.mul(&FieldElement::EDWARDS_D).add(&z); // v = dy²+1
     FieldElement::can_sqrt_ratio_i(&u, &v)
 }
-
 
 impl AsRef<[u8]> for Pubkey {
     fn as_ref(&self) -> &[u8] {
@@ -649,16 +651,22 @@ mod tests {
         let public_key = Pubkey::from_str_const("SeedPubey1111111111111111111111111111111111");
         assert_eq!(
             Pubkey::create_program_address(&[b"", &[1]], &program_id),
-            Ok(Pubkey::from_str_const("BwqrghZA2htAcqq8dzP1WDAhTXYTYWj7CHxF5j7TDBAe")),
+            Ok(Pubkey::from_str_const(
+                "BwqrghZA2htAcqq8dzP1WDAhTXYTYWj7CHxF5j7TDBAe"
+            )),
         );
         assert_eq!(
             Pubkey::create_program_address(&[b"Talking", b"Squirrels"], &program_id),
-            Ok(Pubkey::from_str_const("2fnQrngrQT4SeLcdToJAD96phoEjNL2man2kfRLCASVk")),
+            Ok(Pubkey::from_str_const(
+                "2fnQrngrQT4SeLcdToJAD96phoEjNL2man2kfRLCASVk"
+            )),
         );
 
         assert_eq!(
             Pubkey::create_program_address(&[public_key.as_ref(), &[1]], &program_id),
-            Ok(Pubkey::from_str_const("976ymqVnfE32QFe6NfGDctSvVa36LWnvYxhU6G2232YL")),
+            Ok(Pubkey::from_str_const(
+                "976ymqVnfE32QFe6NfGDctSvVa36LWnvYxhU6G2232YL"
+            )),
         );
 
         assert_ne!(
