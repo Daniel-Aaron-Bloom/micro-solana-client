@@ -1,0 +1,28 @@
+[package]
+name = "micro-solana-client"
+version = "0.1.0"
+authors = ["Daniel Bloom"]
+edition = "2021"
+description = "Tools for interacting with Solana/Anchor"
+documentation = "https://docs.rs/micro-solana-client"
+license = "MIT"
+repository = "https://github.com/Daniel-Aaron-Bloom/micro-solana-client"
+readme = "README.md"
+rust-version = "1.70"
+
+[dependencies]
+borsh = { version = "1", default-features = false, features = ["derive"] }
+bs58 = { version = "0.5", default-features = false }
+eager2 = "1.0.1"
+five8_const = "0.1.4"
+lhash = { version = "1.1.0", features = ["sha256"] }
+serde = { version = "1", default-features = false, optional = true, features = ["derive", "alloc"]}
+solana-instruction = { version = "2", default-features = false, optional = true, features = ["std"]}
+solana-pubkey = { version = "2", default-features = false, optional = true, features = ["borsh"]}
+solana-signature = { version = "2.2.1", default-features = false }
+
+[features]
+default = ["solana-instruction"]
+serde = ["dep:serde", "solana-pubkey?/serde"]
+solana-pubkey = ["dep:solana-pubkey"]
+solana-instruction = ["dep:solana-instruction", "solana-pubkey"]
