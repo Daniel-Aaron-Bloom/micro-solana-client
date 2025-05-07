@@ -6,7 +6,8 @@
 
 use eager2::eager_macro;
 
-extern crate alloc;
+#[doc(hidden)]
+pub extern crate alloc;
 
 #[doc(hidden)]
 pub extern crate borsh;
@@ -401,10 +402,11 @@ macro_rules! __expand_idl_accounts {
 
             pub use ccase!(unstringify!($struct_name), t:"UpperCamel") as Type;
         }
-
-        pub fn get_accounts(self_: &Type, account_metas: &mut Vec<$crate::AccountMeta>) {$(
-            $field_name::get_accounts(&self_.$field_name, account_metas);
-        )*}
+        
+        #[allow(clippy::ptr_arg)]
+        pub fn get_accounts(_self: &Type, _account_metas: &mut Vec<$crate::AccountMeta>) {$(
+            $field_name::get_accounts(&_self.$field_name, _account_metas);)*
+        }
 
         impl Type {
             pub const NAME: &str = $struct_name;
@@ -456,11 +458,12 @@ macro_rules! __expand_idl_args {
         type: $type:tt,
     })*) => {$crate::eager2::lazy!{
         impl Type {
+            #[allow(clippy::too_many_arguments)]
             pub fn build_instruction(&self, $($name: $crate::__expand_idl_typename!($ver; $type)),*) -> $crate::borsh::io::Result<$crate::Instruction> {
                 use $crate::borsh::BorshSerialize;
 
-                let mut accounts = vec![];
-                let mut data = Vec::with_capacity(256);
+                let mut accounts = $crate::alloc::vec![];
+                let mut data = $crate::alloc::vec::Vec::with_capacity(256);
                 data.extend_from_slice(Self::DISCRIMINATOR);
                 $($name.serialize(&mut data)?;)*
                 get_accounts(self, &mut accounts);
