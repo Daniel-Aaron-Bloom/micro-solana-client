@@ -21,7 +21,7 @@ pub extern crate eager2;
 #[cfg(not(feature = "solana-instruction"))]
 mod solana_instruction;
 #[cfg(not(feature = "solana-pubkey"))]
-mod solana_pubkey;
+pub mod solana_pubkey;
 
 pub use solana_instruction::{AccountMeta, Instruction};
 pub use solana_pubkey::{pubkey, Pubkey, PubkeyError};
